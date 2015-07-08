@@ -105,6 +105,7 @@ struct MultinomialNB {
 
 impl MultinomialNB {
     fn fit(x: DMat<usize>, y: DMat<usize>) -> Result<MultinomialNB, &'static str> {
+        let alpha = 1E-10_f64;
         let n_records = x.nrows();
         let n_feats = x.ncols();
         let n_classes = y.ncols();
@@ -139,11 +140,11 @@ impl MultinomialNB {
         let log_n_observations = (n_observations as f64).log2();
         for c in 0..n_classes {
             // pr(c) = class_count[c] / n_observations
-            clf.class_log_prior[c] = (clf.class_count[c] as f64).log2() - log_n_observations;
+            clf.class_log_prior[c] = (clf.class_count[c] as f64 + alpha).log2() - log_n_observations;
             for f in 0..n_feats {
                 // pr(f | c) = feature_count[c,f] / class_count[c]
                 clf.feature_log_prob[(c,f)] = 
-                    (clf.feature_count[(c,f)] as f64).log2() - (clf.class_count[c] as f64).log2();
+                    (clf.feature_count[(c,f)] as f64 + alpha).log2() - (clf.class_count[c] as f64 + alpha).log2();
             }
         }
         Ok(clf)
@@ -164,7 +165,7 @@ impl MultinomialNB {
             for j in 0..n_classes {
                 let mut log_dividend = self.class_log_prior[j];
                 for k in 0..n_features {
-                    log_dividend += self.feature_log_prob[(j,k)];
+                    log_dividend += self.feature_log_prob[(j,k)] * (x[(i,k)] as f64);
                 }
                 y[(i, j)] = log_dividend.exp2();
                 divisor += log_dividend.exp2();
@@ -190,6 +191,15 @@ fn main() {
     let y: DMat<usize> = DataMatrix::open(&y_file_path).unwrap().as_dmat();
     let z: DMat<usize> = DataMatrix::open(&z_file_path).unwrap().as_dmat();
 
+    println!("\nx:\n{:?}", x);
+    println!("\ny:\n{:?}", y);
+    println!("\nz:\n{:?}", z);
+
     let clf = MultinomialNB::fit(x, y).unwrap();
+    println!("\nclass_count:\n{:?}", clf.class_count);
+    println!("\nclass_log_prior:\n{:?}", clf.class_log_prior);
+    println!("\nfeature_count:\n{:?}", clf.feature_count);
+    println!("\nfeature_log_prob:\n{:?}", clf.feature_log_prob);
+
     println!("{:?}", clf.predict(z).unwrap());
 }

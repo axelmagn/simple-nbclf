@@ -2,3 +2,7 @@
 name = "simple-nbclf"
 version = "0.1.0"
 authors = ["Axel Magnuson <axelmagn@gmail.com>"]
+
+[dependencies]
+nalgebra = "0.2.19"
+num = "0.1.25"

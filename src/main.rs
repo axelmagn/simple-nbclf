@@ -73,6 +73,37 @@ impl<T: FromStr + ToString> DataMatrix<T> {
     }
 }
 
+
+struct MultinomialNB {
+    alpha: f32,
+    fit_prior: bool,
+    // shape: n_classes
+    class_log_prior: Vec<f64>,
+    class_count: Vec<usize>,
+    // shape: (n_classes, n_features) 
+    feature_log_prob: Vec<Vec<f64>>,
+    feature_count: Vec<Vec<usize>>
+}
+
+
+impl MultinomialNB {
+    fn new(alpha: f32, fit_prior: bool) -> MultinomialNB {
+        MultinomialNB {
+            alpha: alpha,
+            fit_prior: fit_prior,
+            class_log_prior: Vec::new(),
+            class_count: Vec::new(),
+            feature_log_prob: Vec::new(),
+            feature_count: Vec::new(),
+        }
+    }
+
+    fn fit(&mut self, x: DataMatrix<usize>, y: DataMatrix<usize>) {
+
+    }
+}
+
+
 fn main() {
     let argv: Vec<String> = env::args().collect();
     let x_file_path = argv[1].clone();

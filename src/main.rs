@@ -6,19 +6,13 @@ use std::io;
 use std::fs::File;
 use std::path::Path;
 use std::str::FromStr;
-use std::string::ToString;
 use std::env;
 use num::traits::Zero;
 use na::{DMat, DVec};
 
-struct DataMatrix<T> {
-    data: Vec<T>,
-    shape: (usize, usize),
-}
 
 
-impl<T: FromStr + ToString + Zero + Clone + Copy> DataMatrix<T> {
-    fn open<P: AsRef<Path>>(file_path : P) -> io::Result<DataMatrix<T>> {
+fn load_data<T: FromStr + Zero + Clone + Copy, P: AsRef<Path>>(file_path: P) -> io::Result<DMat<T>> {
         let mut data: Vec<T> = Vec::new();
         let mut rows = 0;
         let mut cols = 0;
@@ -52,42 +46,14 @@ impl<T: FromStr + ToString + Zero + Clone + Copy> DataMatrix<T> {
                 }
             }
         }
-        Ok(DataMatrix{ data: data, shape: (rows, cols) })
-    }
-
-    fn print(&self) {
-        let (rows, cols) = self.shape;
-        for i in 0..rows {
-            let mut line = String::new();
-            for j in 0..cols {
-                if j > 0 { line.push(' '); }
-                let cell = self.data[i * cols + j].to_string();
-                line = line + &cell;
-            }
-            println!("{}", line);
-        }
-    }
-
-    fn get(&self, row: usize, col: usize) -> &T {
-        let (_, cols) = self.shape;
-        &(self.data[row * cols + col])
-    }
-
-    fn set(&mut self, row: usize, col: usize, val: T) {
-        let (_, cols) = self.shape;
-        self.data[row * cols + col] = val;
-    }
-
-    fn as_dmat(&self) -> DMat<T> {
-        let (rows, cols) = self.shape;
-        let mut out = DMat::new_zeros(rows, cols);
+        let mut dmat = DMat::new_zeros(rows, cols);
         for i in 0..rows {
             for j in 0..cols {
-                out[(i,j)] = self.data[i*cols + j];
+                dmat[(i,j)] = data[i*cols + j];
             }
         }
-        out
-    }
+        Ok(dmat)
+
 }
 
 
@@ -105,7 +71,7 @@ struct MultinomialNB {
 
 impl MultinomialNB {
     fn fit(x: DMat<usize>, y: DMat<usize>) -> Result<MultinomialNB, &'static str> {
-        let alpha = 1E-10_f64;
+        let alpha = 1E-50_f64;
         let n_records = x.nrows();
         let n_feats = x.ncols();
         let n_classes = y.ncols();
@@ -187,9 +153,9 @@ fn main() {
     let y_file_path = argv[2].clone();
     let z_file_path = argv[3].clone();
 
-    let x: DMat<usize> = DataMatrix::open(&x_file_path).unwrap().as_dmat();
-    let y: DMat<usize> = DataMatrix::open(&y_file_path).unwrap().as_dmat();
-    let z: DMat<usize> = DataMatrix::open(&z_file_path).unwrap().as_dmat();
+    let x: DMat<usize> = load_data(&x_file_path).unwrap();
+    let y: DMat<usize> = load_data(&y_file_path).unwrap();
+    let z: DMat<usize> = load_data(&z_file_path).unwrap();
 
     println!("\nx:\n{:?}", x);
     println!("\ny:\n{:?}", y);
@@ -201,5 +167,5 @@ fn main() {
     println!("\nfeature_count:\n{:?}", clf.feature_count);
     println!("\nfeature_log_prob:\n{:?}", clf.feature_log_prob);
 
-    println!("{:?}", clf.predict(z).unwrap());
+    println!("\n{:?}", clf.predict(z).unwrap());
 }

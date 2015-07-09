@@ -6,3 +6,5 @@ authors = ["Axel Magnuson <axelmagn@gmail.com>"]
 [dependencies]
 nalgebra = "0.2.19"
 num = "0.1.25"
+log = "0.3.1"
+env_logger = "0.3.1"

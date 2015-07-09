@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate log;
+extern crate env_logger;
 extern crate nalgebra as na;
 extern crate num;
 
@@ -148,6 +151,7 @@ impl MultinomialNB {
 
 
 fn main() {
+    env_logger::init().unwrap();
     let argv: Vec<String> = env::args().collect();
     let x_file_path = argv[1].clone();
     let y_file_path = argv[2].clone();
@@ -157,15 +161,22 @@ fn main() {
     let y: DMat<usize> = load_data(&y_file_path).unwrap();
     let z: DMat<usize> = load_data(&z_file_path).unwrap();
 
-    println!("\nx:\n{:?}", x);
-    println!("\ny:\n{:?}", y);
-    println!("\nz:\n{:?}", z);
+    debug!("\nx:\n{:?}", x);
+    debug!("\ny:\n{:?}", y);
+    debug!("\nz:\n{:?}", z);
 
     let clf = MultinomialNB::fit(x, y).unwrap();
-    println!("\nclass_count:\n{:?}", clf.class_count);
-    println!("\nclass_log_prior:\n{:?}", clf.class_log_prior);
-    println!("\nfeature_count:\n{:?}", clf.feature_count);
-    println!("\nfeature_log_prob:\n{:?}", clf.feature_log_prob);
+    debug!("\nclass_count:\n{:?}", clf.class_count);
+    debug!("\nclass_log_prior:\n{:?}", clf.class_log_prior);
+    debug!("\nfeature_count:\n{:?}", clf.feature_count);
+    debug!("\nfeature_log_prob:\n{:?}", clf.feature_log_prob);
 
-    println!("\n{:?}", clf.predict(z).unwrap());
+    let pred = clf.predict(z).unwrap();
+    for i in 0..pred.nrows() {
+        if i > 0 { print!("\n"); }
+        for j in 0..pred.ncols() {
+            if j > 0 { print!("\t") }
+            print!("{:.6}", pred[(i,j)])
+        }
+    }
 }
